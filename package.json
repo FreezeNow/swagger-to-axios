@@ -1,0 +1,39 @@
+{
+  "name": "swagger-to-axios",
+  "version": "无可奉告",
+  "description": "将swagger转换成axios可用的api文件",
+  "main": "lib/index.js",
+  "type": "module",
+  "types": "lib/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FreezeNow/swagger-to-axios.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "pub": "npm version patch && npm publish",
+    "test": "node test"
+  },
+  "author": "FreezeNow",
+  "keywords": [
+    "swagger",
+    "axios"
+  ],
+  "files": [
+    "lib/**/*"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.4",
+    "js-yaml": "4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.3",
+    "@types/node": "^16.9.1",
+    "prettier": "^2.4.0",
+    "tslint": "^6.1.3",
+    "tslint-config-prettier": "^1.18.0"
+  }
+}

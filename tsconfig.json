@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "ES6",
+    "moduleResolution": "Node",
+    "declaration": true,
+    "outDir": "lib",
+    "esModuleInterop": true,
+    "strict": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/tests/*"]
+}

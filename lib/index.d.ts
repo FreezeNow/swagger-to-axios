@@ -5,6 +5,8 @@
 declare const createApiFiles: (swaggerList?: {
     /** swagger 文档地址 */
     url: string;
+    /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
+    urlType: string;
     /** 生成文件后该文档的文件夹名称 */
     name: string;
 }[], config?: {

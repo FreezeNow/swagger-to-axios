@@ -65,10 +65,13 @@ const createApiFiles = async (
     outputFolder: string;
     /** 默认使用 window.axios，该值存在时，使用引用的方式，传入的值为引用文件地址 */
     improtAxiosPath: string;
+    /** 该值存在时，baseURL 将使用 https 协议 */
+    https: boolean;
   } = {
     includeBaseURL: true,
     outputFolder: './apis',
     improtAxiosPath: '',
+    https: false,
   },
   // swaggerList: SwaggerList[] = [],
   // config: Config = {
@@ -78,7 +81,7 @@ const createApiFiles = async (
   // },
 ) => {
   try {
-    const { includeBaseURL, outputFolder, improtAxiosPath } = config;
+    const { includeBaseURL, outputFolder, improtAxiosPath, https } = config;
     const swagger = {
       path: outputFolder ? outputFolder : './apis',
       list: [] as Folder[],
@@ -190,7 +193,7 @@ export function ${method.toLowerCase() + url2name(api.url)}(${
     url: \`\${baseURL}${api.url}\`,${
               includeBaseURL !== false
                 ? `
-    baseURL: \`http://\${host}\`,`
+    baseURL: \`${https ? 'https' : 'http'}://\${host}\`,`
                 : ''
             }
     method: '${method}',

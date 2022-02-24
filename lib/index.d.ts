@@ -16,5 +16,7 @@ declare const createApiFiles: (swaggerList?: {
     outputFolder: string;
     /** 默认使用 window.axios，该值存在时，使用引用的方式，传入的值为引用文件地址 */
     improtAxiosPath: string;
+    /** 该值存在时，baseURL 将使用 https 协议 */
+    https: boolean;
 }) => Promise<void>;
 export default createApiFiles;

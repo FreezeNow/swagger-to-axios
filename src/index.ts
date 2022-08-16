@@ -24,7 +24,12 @@ const writeFile = (pathname: string, dataBuffer: string) => {
 const ucFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 // 链接变成名称
 const url2name = (str: string) =>
-  str.split('/').reduce((accumulator, currentValue) => ucFirst(accumulator) + ucFirst(currentValue));
+  str
+    .split('/')
+    .reduce(
+      (accumulator: string, currentValue: string) =>
+        ucFirst(accumulator) + ucFirst(currentValue.replace('{', '').replace('}', '')),
+    );
 
 interface Api {
   url: string;
@@ -153,6 +158,7 @@ const createApiFiles = async (
           }
         }
       }
+
       // 将文件夹对象放入 swagger 对象的文件夹 list 中
       swagger.list.push(folderObj);
     }
@@ -182,6 +188,7 @@ ${
 
         const apiList = file.list;
         for (const api of apiList) {
+          const urlParams = api.url.search(/{/) > -1 ? api.url.replace(/.+{(.+)}/, '$1') : '';
           for (let l = 0; l < api.method.length; l++) {
             const method = api.method[l];
             fileContent += `
@@ -190,7 +197,11 @@ export function ${method.toLowerCase() + url2name(api.url)}(${
               method.toUpperCase() === 'GET' ? 'params' : 'data'
             }, options) {
   return ${improtAxiosPath ? 'request' : 'window.axios'}({
-    url: \`\${baseURL}${api.url}\`,${
+    url: \`\${baseURL}${
+      urlParams
+        ? api.url.replace(/{.+}/, '') + `\${${method.toUpperCase() === 'GET' ? 'params' : 'data'}.${urlParams}}`
+        : api.url
+    }\`,${
               includeBaseURL !== false
                 ? `
     baseURL: \`${https ? 'https' : 'http'}://\${host}\`,`

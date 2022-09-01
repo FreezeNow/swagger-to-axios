@@ -20,8 +20,10 @@ const writeFile = (pathname: string, dataBuffer: string) => {
     });
   });
 };
+
 // 首字母大写
 const ucFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
 // 链接变成名称
 const url2name = (str: string) =>
   str
@@ -30,6 +32,28 @@ const url2name = (str: string) =>
       (accumulator: string, currentValue: string) =>
         ucFirst(accumulator) + ucFirst(currentValue.replace('{', '').replace('}', '')),
     );
+/**
+ * 链接变成带参链接（/record/{recordID}/{userID} GET 变成 /record/${params.recordID}/${params.userID}）
+ * @param {string} url 链接名
+ * @param {string} method http方法
+ * @return {string} 转换后的链接
+ */
+const urlTolinkParams = (url: string, method: string) => {
+  const urls = url.split('/');
+  let result = '';
+  for (let i = 0; i < urls.length; i++) {
+    const element = urls[i];
+    if (!element) {
+      continue;
+    }
+    if (!element.startsWith('{')) {
+      result += `/${element}`;
+    } else {
+      result += `/\${${method.toUpperCase() === 'GET' ? 'params' : 'data'}.${element.replace(/{(.+)}/, '$1')}}`;
+    }
+  }
+  return result;
+};
 
 interface Api {
   url: string;
@@ -188,7 +212,6 @@ ${
 
         const apiList = file.list;
         for (const api of apiList) {
-          const urlParams = api.url.search(/{/) > -1 ? api.url.replace(/.+{(.+)}/, '$1') : '';
           for (let l = 0; l < api.method.length; l++) {
             const method = api.method[l];
             fileContent += `
@@ -197,11 +220,7 @@ export function ${method.toLowerCase() + url2name(api.url)}(${
               method.toUpperCase() === 'GET' ? 'params' : 'data'
             }, options) {
   return ${improtAxiosPath ? 'request' : 'window.axios'}({
-    url: \`\${baseURL}${
-      urlParams
-        ? api.url.replace(/{.+}/, '') + `\${${method.toUpperCase() === 'GET' ? 'params' : 'data'}.${urlParams}}`
-        : api.url
-    }\`,${
+    url: \`\${baseURL}${urlTolinkParams(api.url, method)}\`,${
               includeBaseURL !== false
                 ? `
     baseURL: \`${https ? 'https' : 'http'}://\${host}\`,`

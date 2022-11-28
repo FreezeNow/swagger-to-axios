@@ -69,6 +69,7 @@ interface Tag {
 
 interface Folder {
   name: string;
+  cliType: string;
   baseURL: string;
   host: string;
   list: Tag[];
@@ -86,6 +87,8 @@ const createApiFiles = async (
     urlType: string;
     /** 生成文件后该文档的文件夹名称 */
     name: string;
+    /** cli类型，是 vite 还是 vueCli，默认 vueCli */
+    cliType: string;
   }[] = [],
   config: {
     /** 在生成文件时，每个函数是否携带 baseURL 属性. */
@@ -131,6 +134,7 @@ const createApiFiles = async (
       // 创建文件夹对象
       const folderObj: Folder = {
         name: element.name,
+        cliType: element.cliType,
         baseURL: json.basePath,
         host: json.host,
         list: [],
@@ -198,17 +202,20 @@ const createApiFiles = async (
 `;
         }
         fileContent += `const baseURL = '${folder.baseURL}';
-const host = \`${
-          folder.host && folder.host.includes('127.0.0.1')
-            ? folder.host
-            : "${process.env.VUE_APP_HOST ? process.env.VUE_APP_HOST : '基于隐私考虑，已隐藏默认ip'}"
-        }\`;
-${
-  improtAxiosPath
-    ? `import request from '${improtAxiosPath}';
-`
-    : ''
-}`;
+`;
+        if (folder.host && folder.host.includes('127.0.0.1')) {
+          fileContent += `const host = '${folder.host}';
+`;
+        } else {
+          const cliTypeString =
+            folder.cliType === 'vite' ? 'import.meta.env.VITE_APP_HOST' : 'process.env.VUE_APP_HOST';
+          fileContent += `const host = \`\${${cliTypeString} ? ${cliTypeString} : '基于隐私考虑，已隐藏默认ip'}\`;
+`;
+        }
+        if (improtAxiosPath) {
+          fileContent += `import request from '${improtAxiosPath}';
+`;
+        }
 
         const apiList = file.list;
         for (const api of apiList) {

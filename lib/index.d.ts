@@ -9,6 +9,8 @@ declare const createApiFiles: (swaggerList?: {
     urlType: string;
     /** 生成文件后该文档的文件夹名称 */
     name: string;
+    /** cli类型，是 vite 还是 vueCli，默认 vueCli */
+    cliType: string;
 }[], config?: {
     /** 在生成文件时，每个函数是否携带 baseURL 属性. */
     includeBaseURL: boolean;

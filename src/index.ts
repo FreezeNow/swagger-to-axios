@@ -2,120 +2,58 @@ import fs from 'fs';
 const fsPromises = fs.promises;
 import axios from 'axios';
 import YAML from 'js-yaml';
-// 写文件
-/**
- *
- * @param {string} pathname
- * @param {string} dataBuffer
- */
-const writeFile = (pathname: string, dataBuffer: string) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(pathname, dataBuffer, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        // console.log(`${pathname.replace(/(.+\/)/, '')} 保存成功！`);
-        resolve(true);
-      }
-    });
-  });
-};
+import { writeFile, urlToName, urlToLinkParams } from './utils/index.js';
 
-// 首字母大写
-const ucFirst = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-
-// 链接变成名称
-const url2name = (str: string) =>
-  str
-    .split('/')
-    .reduce(
-      (accumulator: string, currentValue: string) =>
-        ucFirst(accumulator) + ucFirst(currentValue.replace('{', '').replace('}', '')),
-    );
-/**
- * 链接变成带参链接（/record/{recordID}/{userID} GET 变成 /record/${params.recordID}/${params.userID}）
- * @param {string} url 链接名
- * @param {string} method http方法
- * @return {string} 转换后的链接
- */
-const urlTolinkParams = (url: string, method: string) => {
-  const urls = url.split('/');
-  let result = '';
-  for (let i = 0; i < urls.length; i++) {
-    const element = urls[i];
-    if (!element) {
-      continue;
-    }
-    if (!element.startsWith('{')) {
-      result += `/${element}`;
-    } else {
-      result += `/\${${method.toUpperCase() === 'GET' ? 'params' : 'data'}.${element.replace(/{(.+)}/, '$1')}}`;
-    }
-  }
-  return result;
-};
-
-interface Api {
+/** swagger 文档配置项 */
+interface SwaggerDocument {
+  /** swagger 文档地址 */
   url: string;
-  method: string[];
-  comment: string[];
+  /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
+  urlType: string;
+  /** 生成文件后该文档的文件夹名称 */
+  name: string;
 }
 
-interface Tag {
-  name: string;
-  comment: string;
-  list: Api[];
-}
-
-interface Folder {
-  name: string;
-  cliType: string;
-  baseURL: string;
-  host: string;
-  list: Tag[];
+/** 生成文件配置项 */
+interface Config {
+  /** 在生成文件时，每个函数是否携带 baseURL 属性. */
+  includeBaseURL?: boolean;
+  /**
+   * 如果 includeBaseURL 为 false，则不需要配置该项
+   * cli类型，是 Vite 还是 VueCli ，默认 VueCli */
+  cliType?: string;
+  /**
+   * 如果 includeBaseURL 为 false，则不需要配置该项
+   * host 的配置名称，不填时会根据 cliType 属性自动设为 VUE_APP_HOST 或者 VITE_APP_HOST
+   * 注：如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host */
+  envHostName?: string;
+  /** 生成的文件所在目录，默认输出到当前目录的 apis 文件夹中（如果不存在导出文件夹会自动生成该文件夹） */
+  outputFolder?: string;
+  /** 默认使用 window.axios，该值存在时，使用引用的方式，传入的值为引用文件地址 */
+  improtAxiosPath?: string;
+  /** 该值存在时，baseURL 将使用 https 协议 */
+  https?: boolean;
+  /** 是否生成 ts 文件，默认生成 js 文件 */
+  typeScript?: boolean;
 }
 
 /** 创建所有 API 文件
- * @param {Object[]} swaggerList - swagger 文档列表
- * @param {Object} config - 配置项
+ * @param {SwaggerDocument[]} swaggerList - swagger 文档列表
+ * @param {Config} config - 配置项
  */
-const createApiFiles = async (
-  swaggerList: {
-    /** swagger 文档地址 */
-    url: string;
-    /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
-    urlType: string;
-    /** 生成文件后该文档的文件夹名称 */
-    name: string;
-    /** cli类型，是 vite 还是 vueCli，默认 vueCli */
-    cliType: string;
-  }[] = [],
-  config: {
-    /** 在生成文件时，每个函数是否携带 baseURL 属性. */
-    includeBaseURL: boolean;
-    /** 生成的文件所在目录，默认输出到当前目录的 apis 文件夹中（如果不存在导出文件夹会自动生成该文件夹） */
-    outputFolder: string;
-    /** 默认使用 window.axios，该值存在时，使用引用的方式，传入的值为引用文件地址 */
-    improtAxiosPath: string;
-    /** 该值存在时，baseURL 将使用 https 协议 */
-    https: boolean;
-  } = {
-    includeBaseURL: true,
-    outputFolder: './apis',
-    improtAxiosPath: '',
-    https: false,
-  },
-  // swaggerList: SwaggerList[] = [],
-  // config: Config = {
-  //   includeBaseURL: true,
-  //   outputFolder: './apis',
-  //   improtAxiosPath: '',
-  // },
-) => {
+const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Config = {}) => {
   try {
-    const { includeBaseURL, outputFolder, improtAxiosPath, https } = config;
+    const {
+      includeBaseURL = true,
+      cliType = 'VueCli',
+      envHostName = 'VUE_APP_HOST',
+      outputFolder = './apis',
+      improtAxiosPath,
+      https = false,
+      typeScript = false,
+    } = config;
     const swagger = {
-      path: outputFolder ? outputFolder : './apis',
+      path: outputFolder,
       list: [] as Folder[],
     };
     // 循环 swagger 文档列表
@@ -134,7 +72,7 @@ const createApiFiles = async (
       // 创建文件夹对象
       const folderObj: Folder = {
         name: element.name,
-        cliType: element.cliType,
+        cliType: cliType,
         baseURL: json.basePath,
         host: json.host,
         list: [],
@@ -190,7 +128,7 @@ const createApiFiles = async (
       // 将文件夹对象放入 swagger 对象的文件夹 list 中
       swagger.list.push(folderObj);
     }
-    //
+    // 生成文件夹
     await fsPromises.mkdir(`${swagger.path}`, { recursive: true });
     for (const folder of swagger.list) {
       await fsPromises.mkdir(`${swagger.path}/${folder.name}`, { recursive: true });
@@ -201,16 +139,18 @@ const createApiFiles = async (
           fileContent += `// ${file.comment}
 `;
         }
-        fileContent += `const baseURL = '${folder.baseURL}';
+        fileContent += `const basePath = '${folder.baseURL}';
 `;
-        if (folder.host && folder.host.includes('127.0.0.1')) {
-          fileContent += `const host = '${folder.host}';
+        if (includeBaseURL) {
+          if (folder.host && folder.host.includes('127.0.0.1')) {
+            fileContent += `const host = '${folder.host}';
 `;
-        } else {
-          const cliTypeString =
-            folder.cliType === 'vite' ? 'import.meta.env.VITE_APP_HOST' : 'process.env.VUE_APP_HOST';
-          fileContent += `const host = \`\${${cliTypeString} ? ${cliTypeString} : '基于隐私考虑，已隐藏默认ip'}\`;
+          } else {
+            const cliTypeString =
+              folder.cliType === 'Vite' ? `import.meta.env.${envHostName}` : `process.env.${envHostName}`;
+            fileContent += `const host = \`\${${cliTypeString} ? ${cliTypeString} : folder.host}\`;
 `;
+          }
         }
         if (improtAxiosPath) {
           fileContent += `import request from '${improtAxiosPath}';
@@ -223,11 +163,11 @@ const createApiFiles = async (
             const method = api.method[l];
             fileContent += `
 //  ${api.comment[l]}
-export function ${method.toLowerCase() + url2name(api.url)}(${
+export function ${method.toLowerCase() + urlToName(api.url)}(${
               method.toUpperCase() === 'GET' ? 'params' : 'data'
             }, options) {
   return ${improtAxiosPath ? 'request' : 'window.axios'}({
-    url: \`\${baseURL}${urlTolinkParams(api.url, method)}\`,${
+    url: \`\${basePath}${urlToLinkParams(api.url, method)}\`,${
               includeBaseURL !== false
                 ? `
     baseURL: \`${https ? 'https' : 'http'}://\${host}\`,`
@@ -241,7 +181,7 @@ export function ${method.toLowerCase() + url2name(api.url)}(${
 `;
           }
         }
-        await writeFile(`${swagger.path}${folder.name ? '/' + folder.name : ''}/${file.name}.js`, fileContent).catch(
+        await writeFile(`${swagger.path}${folder.name ? '/' + folder.name : ''}/${file.name}.${typeScript ? 'ts':'js'}`, fileContent).catch(
           (err) => console.log(err),
         );
       }

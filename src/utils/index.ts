@@ -38,8 +38,7 @@ export const urlToName = (str: string) =>
 export const urlToLinkParams = (url: string, method: string) => {
   const urls = url.split('/');
   let result = '';
-  for (let i = 0; i < urls.length; i++) {
-    const element = urls[i];
+  for (const element of urls) {
     if (!element) {
       continue;
     }

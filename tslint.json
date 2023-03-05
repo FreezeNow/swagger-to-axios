@@ -1,6 +1,10 @@
 {
+  "plugins": [
+    "eslint-plugin-tsdoc"
+  ],
   "rules": {
-    "no-console": false
+    "no-console": false,
+    "tsdoc/syntax": "warn"
   },
   "extends": ["tslint:recommended", "tslint-config-prettier"]
 }

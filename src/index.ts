@@ -9,9 +9,9 @@ interface SwaggerDocument {
   /** swagger 文档地址 */
   url: string;
   /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
-  urlType: string;
-  /** 生成文件后该文档的文件夹名称 */
-  name: string;
+  urlType?: string;
+  /** 生成文件后该文档的文件夹名称，不填会使用随机数作为文件夹名称 */
+  name?: string;
 }
 
 /** 生成文件配置项 */
@@ -20,12 +20,14 @@ interface Config {
   includeBaseURL?: boolean;
   /**
    * 如果 includeBaseURL 为 false，则不需要配置该项
-   * cli类型，是 Vite 还是 VueCli ，默认 VueCli */
+   * cli类型，是 Vite 还是 VueCli ，默认 VueCli
+   */
   cliType?: string;
   /**
    * 如果 includeBaseURL 为 false，则不需要配置该项
    * host 的配置名称，不填时会根据 cliType 属性自动设为 VUE_APP_HOST 或者 VITE_APP_HOST
-   * 注：如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host */
+   * 注：如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host
+   */
   envHostName?: string;
   /** 生成的文件所在目录，默认输出到当前目录的 apis 文件夹中（如果不存在导出文件夹会自动生成该文件夹） */
   outputFolder?: string;
@@ -58,11 +60,12 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
     };
     // 循环 swagger 文档列表
     for (const element of swaggerList) {
+      const { url, urlType = 'yaml', name = Math.random().toString() } = element;
       // 获取文档并转换成 json
       const json = await axios
-        .get(element.url)
+        .get(url)
         .then((res) => {
-          if (element.urlType && element.urlType === 'json') {
+          if (urlType && urlType === 'json') {
             return res.data;
           }
           const jsonData: any = YAML.load(res.data);
@@ -71,8 +74,8 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
         .catch((error) => console.error(error));
       // 创建文件夹对象
       const folderObj: Folder = {
-        name: element.name,
-        cliType: cliType,
+        name,
+        cliType,
         baseURL: json.basePath,
         host: json.host,
         list: [],
@@ -148,7 +151,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
           } else {
             const cliTypeString =
               folder.cliType === 'Vite' ? `import.meta.env.${envHostName}` : `process.env.${envHostName}`;
-            fileContent += `const host = \`\${${cliTypeString} ? ${cliTypeString} : folder.host}\`;
+            fileContent += `const host = \`\${${cliTypeString} ? ${cliTypeString} : '${folder.host}'}\`;
 `;
           }
         }
@@ -163,9 +166,9 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
             const method = api.method[l];
             fileContent += `
 //  ${api.comment[l]}
-export function ${method.toLowerCase() + urlToName(api.url)}(${
-              method.toUpperCase() === 'GET' ? 'params' : 'data'
-            }, options) {
+export function ${method.toLowerCase() + urlToName(api.url)}(${method.toUpperCase() === 'GET' ? 'params' : 'data'}${
+              typeScript ? '?: any' : ''
+            }, options${typeScript ? '?: { [key: string]: any }' : ''}) {
   return ${improtAxiosPath ? 'request' : 'window.axios'}({
     url: \`\${basePath}${urlToLinkParams(api.url, method)}\`,${
               includeBaseURL !== false
@@ -181,9 +184,10 @@ export function ${method.toLowerCase() + urlToName(api.url)}(${
 `;
           }
         }
-        await writeFile(`${swagger.path}${folder.name ? '/' + folder.name : ''}/${file.name}.${typeScript ? 'ts':'js'}`, fileContent).catch(
-          (err) => console.log(err),
-        );
+        await writeFile(
+          `${swagger.path}${folder.name ? '/' + folder.name : ''}/${file.name}.${typeScript ? 'ts' : 'js'}`,
+          fileContent,
+        ).catch((err) => console.log(err));
       }
     }
   } catch (error) {

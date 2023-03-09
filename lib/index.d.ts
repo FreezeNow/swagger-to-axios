@@ -9,7 +9,7 @@ interface SwaggerDocument {
 }
 /** 生成文件配置项 */
 interface Config {
-    /** 在生成文件时，每个函数是否携带 baseURL 属性. */
+    /** 在生成文件时，每个函数是否携带 baseURL 属性，默认为 true */
     includeBaseURL?: boolean;
     /**
      * 如果 includeBaseURL 为 false，则不需要配置该项
@@ -22,13 +22,13 @@ interface Config {
      * 注：如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host
      */
     envHostName?: string;
-    /** 生成的文件所在目录，默认输出到当前目录的 apis 文件夹中（如果不存在导出文件夹会自动生成该文件夹） */
+    /** 生成的文件所在目录，默认为 ./apis */
     outputFolder?: string;
-    /** 默认使用 window.axios，该值存在时，使用引用的方式，传入的值为引用文件地址 */
+    /** 需要引用的 axios 函数地址，默认为 window.axios */
     improtAxiosPath?: string;
-    /** 该值存在时，baseURL 将使用 https 协议 */
+    /** 是否使用 https，默认为 false */
     https?: boolean;
-    /** 是否生成 ts 文件，默认生成 js 文件 */
+    /** 是否生成 ts 文件，默认为 false */
     typeScript?: boolean;
 }
 /** 创建所有 API 文件

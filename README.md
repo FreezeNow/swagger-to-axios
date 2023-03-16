@@ -8,26 +8,35 @@
 ```TypeScript
 /** 生成文件配置项 */
 interface Config {
-  /** 在生成文件时，每个函数是否携带 baseURL 属性，默认为 true */
+  /** 在生成文件时，每个函数是否携带 baseURL 属性，默认为 true。 */
   includeBaseURL?: boolean;
   /**
-   * 如果 includeBaseURL 为 false，则不需要配置该项
-   * cli类型，是 Vite 还是 VueCli ，默认 VueCli
+   * 如果 includeBaseURL 为 false，则不需要配置该项。
+   * cli类型，是 Vite 还是 VueCli ，默认 VueCli。
    */
   cliType?: string;
   /**
-   * 如果 includeBaseURL 为 false，则不需要配置该项
-   * host 的配置名称，不填时会根据 cliType 属性自动设为 VUE_APP_HOST 或者 VITE_APP_HOST
-   * 注：如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host
+   * 如果 includeBaseURL 为 false，则不需要配置该项。
+   * host 的配置名称，不填时会根据 cliType 属性自动设为 VUE_APP_HOST 或者 VITE_APP_HOST。
+   * 如果 swagger 的 host 填写了正确的地址，你也可以完全不配置该项，生成的代码会使用三目运算符，并将非的表达式设置为 swagger 的 host。
    */
   envHostName?: string;
-  /** 生成的文件所在目录，默认为 ./apis */
-  outputFolder?: string;
-  /** 需要引用的 axios 函数地址，默认为 window.axios */
-  improtAxiosPath?: string;
-  /** 是否使用 https，默认为 false */
+  /**
+   * 如果 includeBaseURL 为 false，则不需要配置该项。
+   * 网络协议的配置名称，不填时会根据 cliType 属性自动设为 VUE_APP_PROTOCOL 或者 VITE_APP_PROTOCOL。
+   * VUE_APP_PROTOCOL / VITE_APP_PROTOCOL 的值应该为 'https' 或者 'http'。
+   */
+  envProtocolName?: string;
+  /**
+   * 如果 includeBaseURL 为 false，则不需要配置该项。
+   * 是否使用 https，默认为 false。 */
   https?: boolean;
-  /** 是否生成 ts 文件，默认为 false */
+  /** 生成的文件所在目录，默认为 ./apis。 */
+  outputFolder?: string;
+  /** 需要引用的 axios 函数地址，默认为 window.axios。 */
+  improtAxiosPath?: string;
+
+  /** 是否生成 ts 文件，默认为 false。 */
   typeScript?: boolean;
 }
 ```
@@ -45,5 +54,25 @@ swagger2axios(folderNameList,{
   includeBaseURL: true,
   cliType: 'Vite',
   improtAxiosPath: '@/utils/request',
+  envProtocolName: 'VITE_APP_SCHEM',
+  https: true
 })
+
+/**以下是生成的文件内容*/
+// 仲夏夜之淫梦相关接口
+const basePath = '/midsummer/night/lewd/dream';
+const host = `${import.meta.env.VUE_APP_HOST ? import.meta.env.VUE_APP_HOST : '127.0.0.1:1919'}`;
+const protocol = `${import.meta.env.VITE_APP_SCHEM ? import.meta.env.VITE_APP_SCHEM : 'https'}`;
+import request from '@/utils/request';
+
+//  获取怪叫声
+export function getHumHumAhAhAhAh(params, options) {
+  return request({
+    url: `${basePath}/hum/hum/ah/ah/ah/ah`,
+    baseURL: `${protocol}://${host}`,
+    method: 'get',
+    params,
+    ...options,
+  });
+}
 ```

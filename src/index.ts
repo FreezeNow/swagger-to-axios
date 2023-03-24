@@ -8,9 +8,12 @@ import { writeFile, urlToName, urlToLinkParams } from './utils/index.js';
 interface SwaggerDocument {
   /** swagger 文档地址 */
   url: string;
-  /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
+  /** 是否使用本地 swagger 文档，默认为 false。
+   * 如果该项为 true，则 url 应填本地地址，建议填写完整路径 */
+  localFile?: boolean;
+  /** swagger 文档文件类型，yaml 还是 json ，默认为 yaml */
   urlType?: string;
-  /** 生成文件后该文档的文件夹名称，不填会使用随机数作为文件夹名称 */
+  /** 生成文件后该文档的文件夹名称，默认会使用随机数作为文件夹名称 */
   name?: string;
 }
 
@@ -70,18 +73,28 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
     };
     // 循环 swagger 文档列表
     for (const element of swaggerList) {
-      const { url, urlType = 'yaml', name = Math.random().toString() } = element;
-      // 获取文档并转换成 json
-      const json = await axios
-        .get(url)
-        .then((res) => {
-          if (urlType && urlType === 'json') {
-            return res.data;
-          }
-          const jsonData: any = YAML.load(res.data);
-          return jsonData;
-        })
-        .catch((error) => console.error(error));
+      const { url, localFile = false, urlType = 'yaml', name = Math.random().toString() } = element;
+      let json;
+      if (localFile) {
+        const fileString = await fsPromises.readFile(url, { encoding: 'utf8' }).catch((error) => console.error(error));
+        if (!fileString) {
+           console.log(`${url}下的文件没有内容，已跳过`)
+           continue;
+        }
+        json = urlType === 'json' ? fileString : YAML.load(fileString);
+      } else {
+        // 获取文档并转换成 json
+        json = await axios
+          .get(url)
+          .then((res) => {
+            if (urlType && urlType === 'json') {
+              return res.data;
+            }
+            const jsonData: any = YAML.load(res.data);
+            return jsonData;
+          })
+          .catch((error) => console.error(error));
+      }
       // 创建文件夹对象
       const folderObj: Folder = {
         name,

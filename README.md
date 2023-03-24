@@ -6,6 +6,18 @@
 这个函数的第一个参数（必填）为需要访问的文件名（文件名请访问内部的 api 接口文档地址网页）；第二个参数（选填）是可选配置项，配置内容如下。
 
 ```TypeScript
+/** swagger 文档配置项 */
+interface SwaggerDocument {
+  /** swagger 文档地址，默认应该使用可请求地址 */
+  url: string;
+  /** 是否使用本地 swagger 文档，默认为 false。
+   * 如果该项为 true，则 url 应填本地地址，建议填写完整路径 */
+  localFile?: boolean;
+  /** swagger 文档文件类型，yaml 还是 json ，默认为 yaml */
+  urlType?: string;
+  /** 生成文件后该文档的文件夹名称，默认会使用随机数作为文件夹名称 */
+  name?: string;
+}
 /** 生成文件配置项 */
 interface Config {
   /** 在生成文件时，每个函数是否携带 baseURL 属性，默认为 true。 */
@@ -35,22 +47,21 @@ interface Config {
   outputFolder?: string;
   /** 需要引用的 axios 函数地址，默认为 window.axios。 */
   improtAxiosPath?: string;
-
   /** 是否生成 ts 文件，默认为 false。 */
   typeScript?: boolean;
 }
 ```
 
-以下是参考用例
+## 参考用例
 
 ```JavaScript
 const swagger2axios = require('swagger-to-axios');
-const folderNameList = ['name'].map((name) => ({
+const swaggerDocumentList = ['name'].map((name) => ({
   url: `http://127.0.0.1:114514/swagger?name=${name}.json`,
   urlType: 'json',
   name,
 }));
-swagger2axios(folderNameList,{
+swagger2axios(swaggerDocumentList,{
   includeBaseURL: true,
   cliType: 'Vite',
   improtAxiosPath: '@/utils/request',
@@ -59,16 +70,17 @@ swagger2axios(folderNameList,{
 })
 
 /**以下是生成的文件内容*/
-// 仲夏夜之淫梦相关接口
-const basePath = '/midsummer/night/lewd/dream';
+// user.js
+// 用户相关接口
+const basePath = '/api/v1';
 const host = `${import.meta.env.VUE_APP_HOST ? import.meta.env.VUE_APP_HOST : '127.0.0.1:1919'}`;
 const protocol = `${import.meta.env.VITE_APP_SCHEM ? import.meta.env.VITE_APP_SCHEM : 'https'}`;
 import request from '@/utils/request';
 
-//  获取怪叫声
-export function getHumHumAhAhAhAh(params, options) {
+//  获取用户信息
+export function getUserInfo(params, options) {
   return request({
-    url: `${basePath}/hum/hum/ah/ah/ah/ah`,
+    url: `${basePath}/user/info`,
     baseURL: `${protocol}://${host}`,
     method: 'get',
     params,

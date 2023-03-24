@@ -2,9 +2,12 @@
 interface SwaggerDocument {
     /** swagger 文档地址 */
     url: string;
-    /** swagger 文档文件类型， yaml 还是 json ，默认为 yaml */
+    /** 是否使用本地 swagger 文档，默认为 false。
+     * 如果该项为 true，则 url 应填本地地址，建议填写完整路径 */
+    localFile?: boolean;
+    /** swagger 文档文件类型，yaml 还是 json ，默认为 yaml */
     urlType?: string;
-    /** 生成文件后该文档的文件夹名称，不填会使用随机数作为文件夹名称 */
+    /** 生成文件后该文档的文件夹名称，默认会使用随机数作为文件夹名称 */
     name?: string;
 }
 /** 生成文件配置项 */

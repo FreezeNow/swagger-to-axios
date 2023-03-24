@@ -3,3 +3,4 @@
 /lib-old
 package-lock.json
 node_modules/
+swagger.yaml

@@ -46,9 +46,10 @@ interface Config {
   outputFolder?: string;
   /** 需要引用的 axios 函数地址，默认为 window.axios。 */
   improtAxiosPath?: string;
-
   /** 是否生成 ts 文件，默认为 false。 */
   typeScript?: boolean;
+  /** url是否放置于 options 中，默认为 true。如为 false，则将放在第一个参数中。 */
+  urlInOptions?: boolean;
 }
 
 /** 创建所有 API 文件
@@ -66,6 +67,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
       outputFolder = './apis',
       improtAxiosPath,
       typeScript = false,
+      urlInOptions = true,
     } = config;
     const swagger = {
       path: outputFolder,
@@ -78,8 +80,8 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
       if (localFile) {
         const fileString = await fsPromises.readFile(url, { encoding: 'utf8' }).catch((error) => console.error(error));
         if (!fileString) {
-           console.log(`${url}下的文件没有内容，已跳过`)
-           continue;
+          console.log(`${url}下的文件没有内容，已跳过`);
+          continue;
         }
         json = urlType === 'json' ? fileString : YAML.load(fileString);
       } else {
@@ -120,32 +122,29 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
           for (const name in methods) {
             if (methods.hasOwnProperty(name)) {
               const method = methods[name];
-              const tag = folderObj.list.find((ele) => ele.name === method.tags[0]);
-              if (tag) {
-                const api = tag.list.find((ele) => ele.url === path);
-                if (api) {
-                  api.method.push(name);
-                  api.comment.push(method.summary);
-                } else {
-                  tag.list.push({
-                    url: path,
-                    method: [name],
-                    comment: [method.summary],
-                  });
-                }
-              } else {
-                folderObj.list.push({
+              let tag = folderObj.list.find((ele) => ele.name === method.tags[0]);
+              if (!tag) {
+                tag = {
                   name: method.tags[0],
                   comment: '',
-                  list: [
-                    {
-                      url: path,
-                      method: [name],
-                      comment: [method.summary],
-                    },
-                  ],
-                });
+                  list: [],
+                };
+                folderObj.list.push(tag);
               }
+              let api = tag.list.find((ele) => ele.url === path);
+              if (!api) {
+                api = {
+                  url: path,
+                  method: [],
+                  comment: [],
+                };
+                tag.list.push(api);
+              }
+              api.method.push(name);
+              api.comment.push({
+                summary: method.summary,
+                description: method.description,
+              });
             }
           }
         }
@@ -192,21 +191,38 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
         for (const api of apiList) {
           for (let l = 0; l < api.method.length; l++) {
             const method = api.method[l];
-            fileContent += `
-//  ${api.comment[l]}
-export function ${method.toLowerCase() + urlToName(api.url)}(${method.toUpperCase() === 'GET' ? 'params' : 'data'}${
-              typeScript ? '?: any' : ''
-            }, options${typeScript ? '?: { [key: string]: any }' : ''}) {
-  return ${improtAxiosPath ? 'request' : 'window.axios'}({
-    url: \`\${basePath}${urlToLinkParams(api.url, method)}\`,${
-              includeBaseURL !== false
-                ? `
-    baseURL: \`\${protocol}://\${host}\`,`
-                : ''
+            const { summary, description } = api.comment[l];
+            if (summary) {
+              fileContent += `
+//  ${summary}`;
             }
-    method: '${method}',
+            if (description) {
+              fileContent += `
+//  ${description}`;
+            }
+            fileContent += `
+`;
+            fileContent += `export function ${method.toLowerCase() + urlToName(api.url)}(`;
+            fileContent += method.toUpperCase() === 'GET' ? 'params' : 'data';
+            fileContent += `${typeScript ? '?: any' : ''}, options${typeScript ? '?: { [key: string]: any }' : ''}) {
+  `;
+            fileContent += `return ${improtAxiosPath ? `request${typeScript ? '<any>' : ''}` : 'window.axios'}(`;
+            if (!urlInOptions) {
+              fileContent += `\`\${basePath}${urlToLinkParams(api.url, method)}\`, `;
+            }
+            fileContent += `{
+    `;
+            if (urlInOptions) {
+              fileContent += `url: \`\${basePath}${urlToLinkParams(api.url, method)}\`,
+    `;
+            }
+            if (includeBaseURL) {
+              fileContent += `baseURL: \`\${protocol}://\${host}\`,
+    `;
+            }
+            fileContent += `method: '${method}',
     ${method.toLowerCase() === 'get' ? 'params' : 'data'},
-    ...options,
+    ...(options || {}),
   });
 }
 `;

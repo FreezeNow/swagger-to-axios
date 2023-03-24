@@ -8,7 +8,7 @@
 ```TypeScript
 /** swagger 文档配置项 */
 interface SwaggerDocument {
-  /** swagger 文档地址，默认应该使用可请求地址 */
+  /** swagger 文档地址 */
   url: string;
   /** 是否使用本地 swagger 文档，默认为 false。
    * 如果该项为 true，则 url 应填本地地址，建议填写完整路径 */
@@ -18,6 +18,7 @@ interface SwaggerDocument {
   /** 生成文件后该文档的文件夹名称，默认会使用随机数作为文件夹名称 */
   name?: string;
 }
+
 /** 生成文件配置项 */
 interface Config {
   /** 在生成文件时，每个函数是否携带 baseURL 属性，默认为 true。 */
@@ -49,6 +50,8 @@ interface Config {
   improtAxiosPath?: string;
   /** 是否生成 ts 文件，默认为 false。 */
   typeScript?: boolean;
+  /** url是否放置于 options 中，默认为 true。如为 false，则将放在第一个参数中。 */
+  urlInOptions?: boolean;
 }
 ```
 
@@ -57,7 +60,7 @@ interface Config {
 ```JavaScript
 const swagger2axios = require('swagger-to-axios');
 const swaggerDocumentList = ['name'].map((name) => ({
-  url: `http://127.0.0.1:114514/swagger?name=${name}.json`,
+  url: `http://127.0.0.1:14514/swagger?name=${name}.json`,
   urlType: 'json',
   name,
 }));
@@ -87,4 +90,11 @@ export function getUserInfo(params, options) {
     ...options,
   });
 }
+```
+
+## 注意事项
+如果想使用 umi-request，需要写一个文件转换一下，之后将 improtAxiosPath 配置项指向该文件的地址就好了。你要问为什么需要转换一下，因为我懒得多想一个配置项的名称。下面是实例代码：
+```JavaScript
+import { request } from '@umijs/max';
+export default request;
 ```

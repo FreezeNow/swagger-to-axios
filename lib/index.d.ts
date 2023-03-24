@@ -41,6 +41,8 @@ interface Config {
     improtAxiosPath?: string;
     /** 是否生成 ts 文件，默认为 false。 */
     typeScript?: boolean;
+    /** url是否放置于 options 中，默认为 true。如为 false，则将放在第一个参数中。 */
+    urlInOptions?: boolean;
 }
 /** 创建所有 API 文件
  * @param {SwaggerDocument[]} swaggerList - swagger 文档列表

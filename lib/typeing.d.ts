@@ -1,7 +1,10 @@
 declare interface Api {
     url: string;
     method: string[];
-    comment: string[];
+    comment: {
+        summary: string;
+        description: string;
+    }[];
 }
 declare interface Tag {
     name: string;

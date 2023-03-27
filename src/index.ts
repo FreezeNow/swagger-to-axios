@@ -164,26 +164,27 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
           fileContent += `// ${file.comment}
 `;
         }
+        if (improtAxiosPath) {
+          fileContent += `import request from '${improtAxiosPath}';
+`;
+        }
         fileContent += `const basePath = '${folder.baseURL}';
 `;
+
         if (includeBaseURL) {
+          const cliTypePrefix = folder.cliType === 'Vite' ? `import.meta.env.` : `process.env.`;
           if (folder.host && folder.host.includes('127.0.0.1')) {
             fileContent += `const host = '${folder.host}';
 `;
           } else {
-            const cliTypePrefix = folder.cliType === 'Vite' ? `import.meta.env.` : `process.env.`;
             const hostCliTypeString = `${cliTypePrefix}${envHostName}`;
             fileContent += `const host = \`\${${hostCliTypeString} ? ${hostCliTypeString} : '${folder.host}'}\`;
 `;
-            const protocolCliTypeString = `${cliTypePrefix}${envProtocolName}`;
-            fileContent += `const protocol = \`\${${protocolCliTypeString} ? ${protocolCliTypeString} : 'http${
-              https ? 's' : ''
-            }'}\`;
-`;
           }
-        }
-        if (improtAxiosPath) {
-          fileContent += `import request from '${improtAxiosPath}';
+          const protocolCliTypeString = `${cliTypePrefix}${envProtocolName}`;
+          fileContent += `const protocol = \`\${${protocolCliTypeString} ? ${protocolCliTypeString} : 'http${
+            https ? 's' : ''
+          }'}\`;
 `;
         }
 

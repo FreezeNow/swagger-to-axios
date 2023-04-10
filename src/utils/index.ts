@@ -27,7 +27,7 @@ export const urlToName = (str: string) =>
     .split('/')
     .reduce(
       (accumulator: string, currentValue: string) =>
-        upperFirstCase(accumulator) + upperFirstCase(currentValue.replace('{', '').replace('}', '')),
+        upperFirstCase(accumulator) + upperFirstCase(currentValue.replace(/{/g, '').replace(/}/g, '')),
     );
 /**
  * 链接变成带参链接（/record/{recordID}/{userID} GET 变成 /record/${params.recordID}/${params.userID}）

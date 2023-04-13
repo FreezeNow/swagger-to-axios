@@ -1,6 +1,6 @@
 {
   "name": "swagger-to-axios",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "将swagger转换成axios可用的api文件",
   "main": "lib/index.js",
   "type": "module",

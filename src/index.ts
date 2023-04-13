@@ -61,8 +61,8 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
     const {
       includeBaseURL = true,
       cliType = 'VueCli',
-      envHostName = 'VUE_APP_HOST',
-      envProtocolName = 'VUE_APP_PROTOCOL',
+      envHostName = cliType === 'VueCli' ? 'VUE_APP_HOST' : 'VITE_APP_HOST',
+      envProtocolName = cliType === 'VueCli' ? 'VUE_APP_PROTOCOL' : 'VITE_APP_PROTOCOL',
       https = false,
       outputFolder = './apis',
       improtAxiosPath,

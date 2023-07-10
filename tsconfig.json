@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "esnext",
     "module": "ES6",
     "moduleResolution": "Node",
     "declaration": true,
     "outDir": "lib",
     "esModuleInterop": true,
     "strict": true
+  },
+  "typeAcquisition":{
+    "include": ["jest"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/tests/*"]

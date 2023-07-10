@@ -1,9 +1,16 @@
+import { SwaggerDefinition } from 'swagger-jsdoc';
+/** 获取 swagger 文档 */
+export declare const getSwaggerJson: ({ localFile, url, urlType, }: {
+    localFile: boolean;
+    url: string;
+    urlType: string;
+}) => Promise<SwaggerDefinition | undefined>;
 /**
  * 写文件
  * @param {string} pathname
  * @param {string} dataBuffer
  */
-export declare const writeFile: (pathname: string, dataBuffer: string) => Promise<unknown>;
+export declare const writeFile: (pathname: string, dataBuffer: string) => Promise<boolean>;
 /** 首字母大写 */
 export declare const upperFirstCase: (str: string) => string;
 /** 链接变成名称 */

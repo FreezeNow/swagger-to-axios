@@ -1,21 +1,55 @@
-import fs from 'fs';
+import fsPromises from 'fs/promises';
+import YAML from 'js-yaml';
+import axios from 'axios';
+import { SwaggerDefinition } from 'swagger-jsdoc';
+
+/** 获取 swagger 文档 */
+export const getSwaggerJson = async ({
+  localFile,
+  url,
+  urlType,
+}: {
+  localFile: boolean;
+  url: string;
+  urlType: string;
+}): Promise<SwaggerDefinition | undefined> => {
+  if (localFile) {
+    const fileString = await fsPromises.readFile(url, { encoding: 'utf8' }).catch((error) => {
+      console.error(error);
+    });
+    if (!fileString) {
+      console.log(`${url}下的文件没有内容，已跳过`);
+      return undefined;
+    }
+    return urlType.toLowerCase() === 'json' ? JSON.parse(fileString) : YAML.load(fileString);
+  } else {
+    // 获取文档并转换成 json
+    return await axios
+      .get(url)
+      .then((res) => {
+        if (urlType && urlType === 'json') {
+          return res.data;
+        }
+        const jsonData: any = YAML.load(res.data);
+        return jsonData;
+      })
+      .catch((error) => console.error(error));
+  }
+};
 
 /**
  * 写文件
  * @param {string} pathname
  * @param {string} dataBuffer
  */
-export const writeFile = (pathname: string, dataBuffer: string) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(pathname, dataBuffer, (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        // console.log(`${pathname.replace(/(.+\/)/, '')} 保存成功！`);
-        resolve(true);
-      }
-    });
-  });
+export const writeFile = async (pathname: string, dataBuffer: string) => {
+  try {
+    await fsPromises.writeFile(pathname, dataBuffer);
+  } catch (error) {
+    console.error(error);
+    throw '发生异常，已停止写文件';
+  }
+  return true;
 };
 
 /** 首字母大写 */

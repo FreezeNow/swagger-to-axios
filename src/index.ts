@@ -1,8 +1,6 @@
 import fs from 'fs';
 const fsPromises = fs.promises;
-import axios from 'axios';
-import YAML from 'js-yaml';
-import { writeFile, urlToName, urlToLinkParams } from './utils/index.js';
+import { writeFile, urlToName, urlToLinkParams, getSwaggerJson } from './utils/index.js';
 
 /** swagger 文档配置项 */
 interface SwaggerDocument {
@@ -76,33 +74,14 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
     // 循环 swagger 文档列表
     for (const element of swaggerList) {
       const { url, localFile = false, urlType = 'yaml', name = Math.random().toString() } = element;
-      let json;
-      if (localFile) {
-        const fileString = await fsPromises.readFile(url, { encoding: 'utf8' }).catch((error) => console.error(error));
-        if (!fileString) {
-          console.log(`${url}下的文件没有内容，已跳过`);
-          continue;
-        }
-        json = urlType === 'json' ? fileString : YAML.load(fileString);
-      } else {
-        // 获取文档并转换成 json
-        json = await axios
-          .get(url)
-          .then((res) => {
-            if (urlType && urlType === 'json') {
-              return res.data;
-            }
-            const jsonData: any = YAML.load(res.data);
-            return jsonData;
-          })
-          .catch((error) => console.error(error));
-      }
+      const json = await getSwaggerJson({ localFile, url, urlType });
+      if (json === undefined) continue;
       // 创建文件夹对象
       const folderObj: Folder = {
         name,
         cliType,
-        baseURL: json.basePath,
-        host: json.host,
+        baseURL: json?.basePath ?? '',
+        host: json?.host ?? '',
         list: [],
       };
       // 获取文档的 tags，并插入文件夹对象的 list 字段中
@@ -110,7 +89,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
         for (const tag of json.tags) {
           folderObj.list.push({
             name: tag.name,
-            comment: tag.description,
+            comment: tag?.description ?? '',
             list: [],
           });
         }
@@ -149,7 +128,6 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
           }
         }
       }
-
       // 将文件夹对象放入 swagger 对象的文件夹 list 中
       swagger.list.push(folderObj);
     }

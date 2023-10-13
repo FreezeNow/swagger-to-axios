@@ -1,10 +1,23 @@
-import { SwaggerDefinition } from 'swagger-jsdoc';
+import { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 /** 获取 swagger 文档 */
-export declare const getSwaggerJson: ({ localFile, url, urlType, }: {
-    localFile: boolean;
+export declare const getSwaggerJson: ({ url, }: {
     url: string;
-    urlType: string;
-}) => Promise<SwaggerDefinition | undefined>;
+}) => Promise<OpenAPIV3.Document | OpenAPIV3_1.Document | undefined>;
+/**
+
+ * @param {SwaggerDocument[]} swaggerList - swagger 文档列表
+ * @param {Config['cliType']} cliType - cli类型
+ * @returns {Promise<Folder[]>} 文件夹数组
+ */
+export declare const getFolderList: (swaggerList: SwaggerDocument[], cliType: string) => Promise<Folder[]>;
+/** 重组 tag 数组 */
+export declare const getTagList: (tags?: OpenAPIV3.TagObject[], paths?: OpenAPIV3.PathsObject) => Tag[];
+/** 重组 response */
+export declare const getResponse: (response?: OpenAPIV3.ResponseObject) => {
+    description: string;
+    data?: any;
+} | undefined;
+export declare const openapiTypeToTypeScript: (schemaObject: OpenAPIV3.SchemaObject) => string;
 /**
  * 写文件
  * @param {string} pathname

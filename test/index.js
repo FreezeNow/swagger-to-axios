@@ -6,38 +6,6 @@ import { getSwaggerJson, getFolderList, upperFirstCase, urlToName, urlToLinkPara
 import pactum from 'pactum';
 
 const mock = pactum.mock;
-
-test('首字母大写', () => {
-  expect(upperFirstCase('test')).toBe('Test');
-});
-
-test('去除所有括号后，链接根据 / 分割，输出首字母大写的字符串', () => {
-  expect(urlToName('/test')).toBe('Test');
-  expect(urlToName('/test/id')).toBe('TestId');
-  expect(urlToName('/test/{id}')).toBe('TestId');
-  expect(urlToName('/test/{id}/num')).toBe('TestIdNum');
-  expect(urlToName('/test/{id}/{num}')).toBe('TestIdNum');
-  expect(urlToName('/test{id}')).toBe('Testid');
-  expect(urlToName('/test{id}{num}')).toBe('Testidnum');
-});
-
-test('链接字符串变成带参模板字符串', () => {
-  const methodMap = {
-    get: 'params',
-    post: 'data',
-  };
-  for (const method in methodMap) {
-    if (Object.hasOwnProperty.call(methodMap, method)) {
-      const element = methodMap[method];
-      expect(urlToLinkParams('/test', method)).toBe('/test');
-      expect(urlToLinkParams('/test/{id}', method)).toBe(`/test/$\{${element}.id}`);
-      expect(urlToLinkParams('/test/{id}/num', method)).toBe(`/test/$\{${element}.id}/num`);
-      expect(urlToLinkParams('/test/{id}/{num}', method)).toBe(`/test/$\{${element}.id}/$\{${element}.num}`);
-      expect(urlToLinkParams('/test{id}', method)).toBe(`/test{id}`);
-    }
-  }
-});
-
 test('获取 swagger 文档', async () => {
   const result = {
     openapi: '3.0.0',
@@ -71,7 +39,66 @@ test('获取 swagger 文档', async () => {
       url: 'http://localhost/yaml',
     }),
   ).toEqual(result);
+  mock.addInteraction({ request: { method: 'GET', path: '/undefined' }, response: { status: 200 } });
+  expect(
+    await getSwaggerJson({
+      url: 'http://localhost/yaml',
+    }),
+  ).toEqual(result);
   mock.stop();
+});
+test('获取 swagger 文档列表', async () => {
+  const result = {
+    name: 'test',
+    cliType: 'Vite',
+    baseURL: '',
+    host: '127.0.0.1:8848',
+    tags: [
+      {
+        name: 'user',
+        comment: '用户',
+        apiList: [
+          { url: '/user/login', method: 'post', comment: { description: '用户登录' }, responses: {} },
+          { url: '/user/logout', method: 'delete', comment: { description: '用户登出' }, responses: {} },
+          { url: '/user/password', method: 'put', comment: { description: '修改密码' }, responses: {} },
+        ],
+      },
+    ],
+  };
+  const list = [{ url: './test/getSwaggerJson.yaml', name: 'test' }, { url: './test/undefined.yaml' }];
+
+  expect(await getFolderList(list, "Vite")).toEqual(result);
+});
+
+test('首字母大写', () => {
+  expect(upperFirstCase('test')).toBe('Test');
+});
+
+test('去除所有括号后，链接根据 / 分割，输出首字母大写的字符串', () => {
+  expect(urlToName('/test')).toBe('Test');
+  expect(urlToName('/test/id')).toBe('TestId');
+  expect(urlToName('/test/{id}')).toBe('TestId');
+  expect(urlToName('/test/{id}/num')).toBe('TestIdNum');
+  expect(urlToName('/test/{id}/{num}')).toBe('TestIdNum');
+  expect(urlToName('/test{id}')).toBe('Testid');
+  expect(urlToName('/test{id}{num}')).toBe('Testidnum');
+});
+
+test('链接字符串变成带参模板字符串', () => {
+  const methodMap = {
+    get: 'params',
+    post: 'data',
+  };
+  for (const method in methodMap) {
+    if (Object.hasOwnProperty.call(methodMap, method)) {
+      const element = methodMap[method];
+      expect(urlToLinkParams('/test', method)).toBe('/test');
+      expect(urlToLinkParams('/test/{id}', method)).toBe(`/test/$\{${element}.id}`);
+      expect(urlToLinkParams('/test/{id}/num', method)).toBe(`/test/$\{${element}.id}/num`);
+      expect(urlToLinkParams('/test/{id}/{num}', method)).toBe(`/test/$\{${element}.id}/$\{${element}.num}`);
+      expect(urlToLinkParams('/test{id}', method)).toBe(`/test{id}`);
+    }
+  }
 });
 
 describe('写入测试', () => {

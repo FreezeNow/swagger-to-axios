@@ -30,7 +30,7 @@ export const getSwaggerJson = async ({
   }
 };
 /**
-
+ * 获取 swagger 文档列表
  * @param {SwaggerDocument[]} swaggerList - swagger 文档列表
  * @param {Config['cliType']} cliType - cli类型
  * @returns {Promise<Folder[]>} 文件夹数组

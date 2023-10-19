@@ -3,19 +3,8 @@
 declare interface SwaggerDocument {
   /** swagger 文档地址 */
   url: string;
-  /**
-   * 是否使用本地 swagger 文档。
-   * 默认值：false。
-   * 注：
-   * 1、如果该项为 true，则 url 应填本地地址，建议填写完整路径。
-   * */
-  localFile?: boolean;
-  /**
-   * swagger 文档文件类型。
-   * 默认值：yaml。
-   * */
-  urlType?: 'yaml' | 'json';
-  /** 生成文件后该文档的文件夹名称。
+  /** 
+   * 生成文件后该文档的文件夹名称。
    * 默认值：字符串随机数。
    * */
   name?: string;
@@ -48,7 +37,8 @@ declare interface Config {
    * 默认值：VUE_APP_PROTOCOL | VITE_APP_PROTOCOL（根据 cliType 属性）。
    * 注：
    * 1、如果 includeBaseURL 为 false，则不需要配置该项。
-   * 2、VUE_APP_PROTOCOL / VITE_APP_PROTOCOL 的值应该为 'https' 或者 'http'。
+   * 2、推荐只在生产环境和开发环境使用不同协议时配置该项。
+   * 3、VUE_APP_PROTOCOL / VITE_APP_PROTOCOL 的值应该为 'https' 或者 'http'。
    */
   envProtocolName?: string;
   /**

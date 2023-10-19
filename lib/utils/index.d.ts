@@ -4,7 +4,7 @@ export declare const getSwaggerJson: ({ url, }: {
     url: string;
 }) => Promise<OpenAPIV3.Document | OpenAPIV3_1.Document | undefined>;
 /**
-
+ * 获取 swagger 文档列表
  * @param {SwaggerDocument[]} swaggerList - swagger 文档列表
  * @param {Config['cliType']} cliType - cli类型
  * @returns {Promise<Folder[]>} 文件夹数组

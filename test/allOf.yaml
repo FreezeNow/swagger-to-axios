@@ -1,0 +1,44 @@
+info:
+  description: demo
+  title: demo
+  version: 1.0.0
+host: '127.0.0.1:8848'
+produces:
+  - application/json
+schemes:
+  - http
+  - https
+basePath: ''
+swagger: '2.0'
+paths:
+  /user:
+    get:
+      parameters: []
+      description: 获取用户
+      tags:
+        - user
+      responses:
+        200:
+          description: '请求成功'
+          schema:
+            allOf:
+              - $ref: '#/definitions/Response'
+
+definitions:
+  Response:
+    properties:
+      errorCode:
+        description: 错误码，正常请求无错误的情况为0
+        type: integer
+        example: 0
+      message:
+        description: 错误码的文本描述
+        type: string
+        example: 成功
+      data:
+        description: 请求结果数据
+    type: object
+
+tags:
+  - name: user
+    description: 用户

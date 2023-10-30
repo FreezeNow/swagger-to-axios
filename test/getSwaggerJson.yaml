@@ -9,7 +9,7 @@ produces:
 schemes:
   - http
   - https
-basePath: ''
+basePath: '/a/b/c'
 swagger: '2.0'
 paths:
   /user/login:

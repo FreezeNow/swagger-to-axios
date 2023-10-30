@@ -6,6 +6,7 @@ import { getSwaggerJson, getFolderList, upperFirstCase, urlToName, urlToLinkPara
 import pactum from 'pactum';
 
 const mock = pactum.mock;
+
 test('获取 swagger 文档', async () => {
   const result = {
     openapi: '3.0.0',
@@ -16,19 +17,67 @@ test('获取 swagger 文档', async () => {
       '/user/password': { put: { description: '修改密码', tags: ['user'], responses: {} } },
     },
     tags: [{ name: 'user', description: '用户' }],
-    servers: [{ url: 'http://127.0.0.1:8848' }, { url: 'https://127.0.0.1:8848' }],
+    servers: [{ url: 'http://127.0.0.1:8848/a/b/c' }, { url: 'https://127.0.0.1:8848/a/b/c' }],
   };
 
   expect(await getSwaggerJson({ url: './test/getSwaggerJson.yaml' })).toEqual(result);
   expect(await getSwaggerJson({ url: './test/getSwaggerJson.json' })).toEqual(result);
   expect(await getSwaggerJson({ url: './test/undefined.json' })).toEqual(undefined);
 
+  expect(await getSwaggerJson({ url: './test/allOf.yaml' })).toEqual({
+    openapi: '3.0.0',
+    info: { description: 'demo', title: 'demo', version: '1.0.0' },
+    paths: {
+      '/user': {
+        get: {
+          description: '获取用户',
+          tags: ['user'],
+          responses: {
+            200: {
+              description: '请求成功',
+              content: {
+                'application/json': {
+                  schema: {
+                    properties: {
+                      errorCode: {
+                        description: '错误码，正常请求无错误的情况为0',
+                        type: 'integer',
+                        example: 0,
+                      },
+                      message: { description: '错误码的文本描述', type: 'string', example: '成功' },
+                      data: { description: '请求结果数据' },
+                    },
+                    type: 'object',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    tags: [{ name: 'user', description: '用户' }],
+    servers: [{ url: 'http://127.0.0.1:8848' }, { url: 'https://127.0.0.1:8848' }],
+    components: {
+      schemas: {
+        Response: {
+          properties: {
+            errorCode: { description: '错误码，正常请求无错误的情况为0', type: 'integer', example: 0 },
+            message: { description: '错误码的文本描述', type: 'string', example: '成功' },
+            data: { description: '请求结果数据' },
+          },
+          type: 'object',
+        },
+      },
+    },
+  });
+
   mock.addInteraction({ request: { method: 'GET', path: '/json' }, response: { status: 200, body: result } });
 
-  mock.start(80);
+  mock.start(8080);
   expect(
     await getSwaggerJson({
-      url: 'http://localhost/json',
+      url: 'http://localhost:8080/json',
     }),
   ).toEqual(result);
   // mock.onGet('https://localhost/yaml').reply(200, await fs.readFile('./test/getSwaggerJson.yaml'));
@@ -36,38 +85,55 @@ test('获取 swagger 文档', async () => {
   mock.addInteraction({ request: { method: 'GET', path: '/yaml' }, response: { status: 200, body: yaml } });
   expect(
     await getSwaggerJson({
-      url: 'http://localhost/yaml',
+      url: 'http://localhost:8080/yaml',
     }),
   ).toEqual(result);
   mock.addInteraction({ request: { method: 'GET', path: '/undefined' }, response: { status: 200 } });
   expect(
     await getSwaggerJson({
-      url: 'http://localhost/yaml',
+      url: 'http://localhost:8080/undefined',
     }),
-  ).toEqual(result);
+  ).toEqual(undefined);
   mock.stop();
 });
 test('获取 swagger 文档列表', async () => {
-  const result = {
-    name: 'test',
-    cliType: 'Vite',
-    baseURL: '',
-    host: '127.0.0.1:8848',
-    tags: [
-      {
-        name: 'user',
-        comment: '用户',
-        apiList: [
-          { url: '/user/login', method: 'post', comment: { description: '用户登录' }, responses: {} },
-          { url: '/user/logout', method: 'delete', comment: { description: '用户登出' }, responses: {} },
-          { url: '/user/password', method: 'put', comment: { description: '修改密码' }, responses: {} },
-        ],
-      },
-    ],
-  };
+  const result = [
+    {
+      name: 'test',
+      cliType: 'Vite',
+      baseURL: '/a/b/c',
+      host: '127.0.0.1:8848',
+      tagList: [
+        {
+          name: 'user',
+          comment: '用户',
+          apiList: [
+            {
+              url: '/user/login',
+              method: 'post',
+              comment: { description: '用户登录', summary: '' },
+              response: undefined,
+            },
+            {
+              url: '/user/logout',
+              method: 'delete',
+              comment: { description: '用户登出', summary: '' },
+              response: undefined,
+            },
+            {
+              url: '/user/password',
+              method: 'put',
+              comment: { description: '修改密码', summary: '' },
+              response: undefined,
+            },
+          ],
+        },
+      ],
+    },
+  ];
   const list = [{ url: './test/getSwaggerJson.yaml', name: 'test' }, { url: './test/undefined.yaml' }];
 
-  expect(await getFolderList(list, "Vite")).toEqual(result);
+  expect(await getFolderList(list, 'Vite')).toEqual(result);
 });
 
 test('首字母大写', () => {

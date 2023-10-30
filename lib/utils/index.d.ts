@@ -1,4 +1,9 @@
 import { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
+/**
+ * 合并 allOf
+ * @param object
+ */
+export declare const expandAllOf: (object: any) => void;
 /** 获取 swagger 文档 */
 export declare const getSwaggerJson: ({ url, }: {
     url: string;
@@ -12,12 +17,13 @@ export declare const getSwaggerJson: ({ url, }: {
 export declare const getFolderList: (swaggerList: SwaggerDocument[], cliType: string) => Promise<Folder[]>;
 /** 重组 tag 数组 */
 export declare const getTagList: (tags?: OpenAPIV3.TagObject[], paths?: OpenAPIV3.PathsObject) => Tag[];
+/** 将 openapi 类型转换为 TS 类型 */
+export declare const openapiTypeToTypeScript: (schemaObject: OpenAPIV3.SchemaObject) => string;
 /** 重组 response */
 export declare const getResponse: (response?: OpenAPIV3.ResponseObject) => {
     description: string;
     data?: any;
 } | undefined;
-export declare const openapiTypeToTypeScript: (schemaObject: OpenAPIV3.SchemaObject) => string;
 /**
  * 写文件
  * @param {string} pathname

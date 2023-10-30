@@ -6,6 +6,34 @@ import lodash from 'lodash';
 
 const mergeWith = lodash.mergeWith;
 
+/**
+ * 合并 allOf
+ * @param object
+ */
+export const expandAllOf = (object: any) => {
+  while (object.hasOwnProperty('allOf')) {
+    const allOf = object.allOf;
+    delete object.allOf;
+    const override = mergeWith({}, ...allOf, object, function (target: any, source: any) {
+      if (Array.isArray(target)) {
+        return target.concat(source).filter((v, i, a) => a.indexOf(v) === i);
+      }
+      if (typeof target === 'object') {
+        expandAllOf(target);
+      }
+      if (typeof source === 'object') {
+        expandAllOf(source);
+      }
+    });
+    Object.assign(object, override);
+  }
+  Object.keys(object).forEach((key) => {
+    if (typeof object[key] === 'object') {
+      expandAllOf(object[key]);
+    }
+  });
+};
+
 /** 获取 swagger 文档 */
 export const getSwaggerJson = async ({
   url,
@@ -42,11 +70,11 @@ export const getFolderList = async (swaggerList: SwaggerDocument[], cliType: str
     const json = await getSwaggerJson({ url });
     if (json === undefined) continue;
     const { tags, paths, servers } = json;
-    const basePath = servers?.[0].url.replace(/.+:\/\/.+\//, '/') ?? '';
+    const basePath = servers?.[0].url.replace(/^.+:\/\/((\d|\w)+\.{0,1})+(:\d+){0,1}/, '') ?? '';
     // 三次替换，分别匹配 http://api.example.com/api , /api , //api.example.com，使结果保持为 api.example.com
     const host =
       servers?.[0].url
-        .replace(/.+:\/\/(.+)\/.+/, '$1')
+        .replace(/^.+:\/\/(((\d|\w)+\.{0,1})+(:\d+){0,1}).*$/, '$1')
         .replace(/^\/[\w|\d]+/, '')
         .replace(/^\/\//, '') ?? '';
     result.push({
@@ -106,25 +134,8 @@ export const getTagList = (tags: OpenAPIV3.TagObject[] = [], paths?: OpenAPIV3.P
   }
   return tagList;
 };
-/** 重组 response */
-export const getResponse = (response?: OpenAPIV3.ResponseObject) => {
-  if (response === undefined) return response;
 
-  const result: {
-    description: string;
-    data?: any;
-  } = {
-    description: response.description,
-    data: {},
-  };
-  result.data = openapiTypeToTypeScript(
-    (response?.content?.['application/json']?.schema as OpenAPIV3.SchemaObject) ?? {},
-  );
-  console.log('result.data', result.data);
-
-  return result;
-};
-
+/** 将 openapi 类型转换为 TS 类型 */
 export const openapiTypeToTypeScript = (schemaObject: OpenAPIV3.SchemaObject): string => {
   const { type = '' } = schemaObject;
   const numberEnum = [
@@ -201,32 +212,23 @@ export const openapiTypeToTypeScript = (schemaObject: OpenAPIV3.SchemaObject): s
   }
   return 'any';
 };
-/**
- * 合并 allOf
- * @param object
- */
-const expandAllOf = (object: any) => {
-  while (object.hasOwnProperty('allOf')) {
-    const allOf = object.allOf;
-    delete object.allOf;
-    const override = mergeWith({}, ...allOf, object, function (target: any, source: any) {
-      if (Array.isArray(target)) {
-        return target.concat(source).filter((v, i, a) => a.indexOf(v) === i);
-      }
-      if (typeof target === 'object') {
-        expandAllOf(target);
-      }
-      if (typeof source === 'object') {
-        expandAllOf(source);
-      }
-    });
-    Object.assign(object, override);
-  }
-  Object.keys(object).forEach((key) => {
-    if (typeof object[key] === 'object') {
-      expandAllOf(object[key]);
-    }
-  });
+
+/** 重组 response */
+export const getResponse = (response?: OpenAPIV3.ResponseObject) => {
+  if (response === undefined) return response;
+
+  const result: {
+    description: string;
+    data?: any;
+  } = {
+    description: response.description,
+    data: {},
+  };
+  result.data = openapiTypeToTypeScript(
+    (response?.content?.['application/json']?.schema as OpenAPIV3.SchemaObject) ?? {},
+  );
+
+  return result;
 };
 
 /**

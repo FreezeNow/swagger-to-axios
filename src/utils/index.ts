@@ -54,6 +54,7 @@ export const getSwaggerJson = async ({
     }
     return swagger;
   } catch (error) {
+    console.error(`${url}异常：${error}`);
     return undefined;
   }
 };
@@ -67,7 +68,7 @@ export const getFolderList = async (swaggerList: SwaggerDocument[], cliType: str
   const result = [];
   for (const element of swaggerList) {
     const { url, name = Math.random().toString() } = element;
-    const json = await getSwaggerJson({ url });
+    const json = await getSwaggerJson({ url, });
     if (json === undefined) continue;
     const { tags, paths, servers } = json;
     const basePath = servers?.[0].url.replace(/^.+:\/\/((\d|\w)+\.{0,1})+(:\d+){0,1}/, '') ?? '';

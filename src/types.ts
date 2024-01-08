@@ -3,7 +3,7 @@
 declare interface SwaggerDocument {
   /** swagger 文档地址 */
   url: string;
-  /** 
+  /**
    * 生成文件后该文档的文件夹名称。
    * 默认值：字符串随机数。
    * */

@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "strict": true
   },
-  "typeAcquisition":{
+  "typeAcquisition": {
     "include": ["jest"]
   },
   "include": ["src"],

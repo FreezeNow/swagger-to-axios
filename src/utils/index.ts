@@ -28,7 +28,7 @@ export const expandAllOf = (object: any) => {
     Object.assign(object, override);
   }
   Object.keys(object).forEach((key) => {
-    if (typeof object[key] === 'object') {
+    if (object[key] && typeof object[key] === 'object') {
       expandAllOf(object[key]);
     }
   });
@@ -68,7 +68,7 @@ export const getFolderList = async (swaggerList: SwaggerDocument[], cliType: str
   const result = [];
   for (const element of swaggerList) {
     const { url, name = Math.random().toString() } = element;
-    const json = await getSwaggerJson({ url, });
+    const json = await getSwaggerJson({ url });
     if (json === undefined) continue;
     const { tags, paths, servers } = json;
     const basePath = servers?.[0].url.replace(/^.+:\/\/((\d|\w)+\.{0,1})+(:\d+){0,1}/, '') ?? '';

@@ -18,10 +18,10 @@ export const expandAllOf = (object: any) => {
       if (Array.isArray(target)) {
         return target.concat(source).filter((v, i, a) => a.indexOf(v) === i);
       }
-      if (typeof target === 'object') {
+      if (target && typeof target === 'object') {
         expandAllOf(target);
       }
-      if (typeof source === 'object') {
+      if (source && typeof source === 'object') {
         expandAllOf(source);
       }
     });

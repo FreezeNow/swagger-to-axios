@@ -46,10 +46,6 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
           fileContent += `import request from '${improtAxiosPath}';
 `;
         }
-        if (typeScript) {
-          fileContent += `import "./typings";
-`;
-        }
         fileContent += `
 const basePath = '${folder.baseURL}';
 `;

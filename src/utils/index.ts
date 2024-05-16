@@ -204,7 +204,7 @@ export const openapiTypeToTypeScript = (schemaObject: OpenAPIV3.SchemaObject): s
          * 在后面进行格式化的时候会将正确的字符串转换为正常形式，
          * 错误的继续保留字符串。
          * */
-        return `'${key}'${required ? '' : '?'}: ${openapiTypeToTypeScript(
+        return `'${key}': ${openapiTypeToTypeScript(
           (schemaObject?.properties as OpenAPIV3.SchemaObject) &&
             (schemaObject?.properties?.[key] as OpenAPIV3.SchemaObject),
         )}; `;

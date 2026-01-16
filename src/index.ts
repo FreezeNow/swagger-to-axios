@@ -88,7 +88,7 @@ const basePath = '${folder.baseURL}';
           fileContent += `${typeScript ? '?: any' : ''}, options${typeScript ? '?: { [key: string]: any }' : ''}) {
   `;
           fileContent += `return ${improtAxiosPath ? `request` : 'window.axios'}${
-            typeScript ? `<API.${functionName}Response>` : ''
+            typeScript ? `<${namespace}.${functionName}Response>` : ''
           }(`;
           if (!urlInOptions) {
             fileContent += `\`\${basePath}${urlToLinkParams(api.url, method)}\`, `;

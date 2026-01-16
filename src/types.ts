@@ -54,15 +54,24 @@ declare interface Config {
    * */
   outputFolder?: string;
   /**
-   * 需要引用的 axios 函数地址。
-   * 默认值：window.axios。
+   * 需要引用的 axios 函数地址，不填则会使用window.axios。
    * */
   improtAxiosPath?: string;
+  /**
+   * improtAxiosPath 存在时才会生效
+   * 需要命名导入的 axios 函数名称，填写后会使用命名导入而非默认导入。
+   * */
+  namedImport?: string;
   /**
    * 是否生成 ts 文件。
    * 默认值：false。
    * */
   typeScript?: boolean;
+  /**
+   * 命名空间
+   * 默认值：API
+   * */
+  namespace?: string;
   /**
    * url是否放置于 options 中。
    * 默认值：true。

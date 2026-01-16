@@ -1,12 +1,7 @@
 import fs from 'fs';
 const fsPromises = fs.promises;
-import {
-  writeFile,
-  urlToName,
-  urlToLinkParams,
-  getFolderList,
-} from './utils/index.js';
-import  "./types.js";
+import { writeFile, urlToName, urlToLinkParams, getFolderList } from './utils/index.js';
+import './types.js';
 
 /** 创建所有 API 文件
  * @param {SwaggerDocument[]} swaggerList - swagger 文档列表
@@ -22,7 +17,9 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
       https = false,
       outputFolder = './apis',
       improtAxiosPath,
+      namedImport,
       typeScript = false,
+      namespace = 'API',
       urlInOptions = true,
     } = config;
     const swagger: Swagger = {
@@ -34,7 +31,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
     await fsPromises.mkdir(`${swagger.path}`, { recursive: true });
     for (const folder of swagger.folderList) {
       await fsPromises.mkdir(`${swagger.path}/${folder.name}`, { recursive: true });
-      let typings = 'declare namespace API {';
+      let typings = `declare namespace ${namespace} {`;
       for (const file of folder.tagList) {
         let fileContent = '';
         // 如果包含注释，则在文件顶部添加注释
@@ -43,7 +40,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
 `;
         }
         if (improtAxiosPath) {
-          fileContent += `import request from '${improtAxiosPath}';
+          fileContent += `import ${namedImport ? namedImport + ' as ' : ''}request from '${improtAxiosPath}';
 `;
         }
         fileContent += `

@@ -40,7 +40,7 @@ const createApiFiles = async (swaggerList: SwaggerDocument[] = [], config: Confi
 `;
         }
         if (improtAxiosPath) {
-          fileContent += `import ${namedImport ? namedImport + ' as ' : ''}request from '${improtAxiosPath}';
+          fileContent += `import ${namedImport ? `{ ${namedImport} as request}` : 'request'} from '${improtAxiosPath}';
 `;
         }
         fileContent += `

@@ -251,13 +251,16 @@ export const writeFile = async (pathname: string, dataBuffer: string) => {
 export const upperFirstCase = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 /** 链接变成名称 */
-export const urlToName = (str: string) =>
-  str
-    .split('/')
-    .reduce(
-      (accumulator: string, currentValue: string) =>
-        upperFirstCase(accumulator) + upperFirstCase(currentValue.replace(/{/g, '').replace(/}/g, '')),
-    );
+export const urlToName = (str: string) => {
+  const resolved = str.replace(/\{([^}]+)\}/g, (_match, name: string) =>
+    name
+      .split(/[\/\-_]/)
+      .reduce((acc: string, p: string) => acc + upperFirstCase(p), ''),
+  );
+  return resolved
+    .split(/[\/\-_]/)
+    .reduce((acc: string, p: string) => upperFirstCase(acc) + upperFirstCase(p));
+};
 /**
  * 链接变成带参链接（/record/{recordID}/{userID} GET 变成 /record/${params.recordID}/${params.userID}）
  * @param {string} url 链接名

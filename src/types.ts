@@ -104,6 +104,8 @@ declare interface Api {
   method: string;
   comment: { summary: string; description: string };
   response?: any;
+  paramType?: string;
+  paramRequired?: boolean;
 }
 
 /** 生成 mock 文件配置项 */

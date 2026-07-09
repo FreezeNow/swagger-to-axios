@@ -72,6 +72,11 @@ const basePath = '${folder.baseURL}';
             typings += `
   type ${functionName}Response = ${api.response.data}`;
           }
+          if (api?.paramType) {
+            const typeName = method.toUpperCase() === 'GET' ? 'Params' : 'Data';
+            typings += `
+  type ${functionName}${typeName} = ${api.paramType}`;
+          }
           const { summary, description } = api.comment;
           if (summary) {
             fileContent += `
@@ -84,8 +89,17 @@ const basePath = '${folder.baseURL}';
           fileContent += `
 `;
           fileContent += `export function ${functionName}(`;
-          fileContent += method.toUpperCase() === 'GET' ? 'params' : 'data';
-          fileContent += `${typeScript ? '?: any' : ''}, options${typeScript ? '?: { [key: string]: any }' : ''}) {
+          const paramName = method.toUpperCase() === 'GET' ? 'params' : 'data';
+          fileContent += paramName;
+          if (typeScript) {
+            if (api.paramType) {
+              const typeName = method.toUpperCase() === 'GET' ? 'Params' : 'Data';
+              fileContent += `${api.paramRequired ? '' : '?'}: ${namespace}.${functionName}${typeName}`;
+            } else {
+              fileContent += '?: any';
+            }
+          }
+          fileContent += `, options${typeScript ? '?: { [key: string]: any }' : ''}) {
   `;
           fileContent += `return ${improtAxiosPath ? `request` : 'window.axios'}${
             typeScript ? `<${namespace}.${functionName}Response>` : ''

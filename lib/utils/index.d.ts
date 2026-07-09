@@ -19,6 +19,11 @@ export declare const getFolderList: (swaggerList: SwaggerDocument[], cliType: st
 export declare const getTagList: (tags?: OpenAPIV3.TagObject[], paths?: OpenAPIV3.PathsObject) => Tag[];
 /** 将 openapi 类型转换为 TS 类型 */
 export declare const openapiTypeToTypeScript: (schemaObject: OpenAPIV3.SchemaObject) => string;
+/** 将参数列表转换为 TS 类型 */
+export declare const parametersToTypeScript: (parameters?: (OpenAPIV3.ParameterObject)[], requestBody?: OpenAPIV3.RequestBodyObject, method?: string) => {
+    type: string;
+    required: boolean;
+};
 /** 重组 response */
 export declare const getResponse: (response?: OpenAPIV3.ResponseObject) => {
     description: string;

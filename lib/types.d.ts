@@ -102,6 +102,8 @@ declare interface Api {
         description: string;
     };
     response?: any;
+    paramType?: string;
+    paramRequired?: boolean;
 }
 /** 生成 mock 文件配置项 */
 declare interface MockConfig {

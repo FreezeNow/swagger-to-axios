@@ -33,6 +33,51 @@ paths:
       tags:
         - user
       responses: {}
+  /user/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: integer
+        - name: keyword
+          in: query
+          required: false
+          type: string
+        - name: pageNum
+          in: query
+          required: false
+          type: integer
+      description: 获取用户详情
+      tags:
+        - user
+      responses: {}
+  /user/{groupId}/members:
+    post:
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          type: integer
+        - name: name
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - name
+              - email
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+              role:
+                type: string
+      description: 添加成员
+      tags:
+        - user
+      responses: {}
 definitions: {}
 responses: {}
 parameters: {}

@@ -120,6 +120,11 @@ export const getTagList = (tags: OpenAPIV3.TagObject[] = [], paths?: OpenAPIV3.P
             };
             tagList.push(tag);
           }
+          const { type: paramType, required: paramRequired } = parametersToTypeScript(
+            method?.parameters as OpenAPIV3.ParameterObject[],
+            method?.requestBody as OpenAPIV3.RequestBodyObject | undefined,
+            name,
+          );
           tag.apiList.push({
             url: path,
             method: name,
@@ -128,6 +133,7 @@ export const getTagList = (tags: OpenAPIV3.TagObject[] = [], paths?: OpenAPIV3.P
               description: method?.description ?? '',
             },
             response: getResponse(method?.responses?.[200] as OpenAPIV3.ResponseObject | undefined),
+            ...(paramType ? { paramType, paramRequired } : {}),
           });
         }
       }
@@ -212,6 +218,55 @@ export const openapiTypeToTypeScript = (schemaObject: OpenAPIV3.SchemaObject): s
       .join('')}}`;
   }
   return 'any';
+};
+
+/** 将参数列表转换为 TS 类型 */
+export const parametersToTypeScript = (
+  parameters: (OpenAPIV3.ParameterObject)[] = [],
+  requestBody?: OpenAPIV3.RequestBodyObject,
+  method?: string,
+): { type: string; required: boolean } => {
+  const fields: string[] = [];
+  let hasRequired = false;
+
+  if (method?.toUpperCase() === 'GET') {
+    for (const param of parameters) {
+      const schema = (param as OpenAPIV3.ParameterObject)?.schema as OpenAPIV3.SchemaObject;
+      if (!schema) continue;
+      const tsType = openapiTypeToTypeScript(schema);
+      if (param.required) hasRequired = true;
+      fields.push(`'${param.name}': ${tsType};`);
+    }
+  } else {
+    for (const param of parameters) {
+      if (param.in === 'path') {
+        const schema = (param as OpenAPIV3.ParameterObject)?.schema as OpenAPIV3.SchemaObject;
+        if (!schema) continue;
+        const tsType = openapiTypeToTypeScript(schema);
+        if (param.required) hasRequired = true;
+        fields.push(`'${param.name}': ${tsType};`);
+      }
+    }
+    if (requestBody?.content?.['application/json']?.schema) {
+      const bodySchema = requestBody.content['application/json'].schema as OpenAPIV3.SchemaObject;
+      if (bodySchema.properties) {
+        const requiredFields: string[] = bodySchema.required || ([] as string[]);
+        if (requestBody.required) hasRequired = true;
+        for (const key of Object.keys(bodySchema.properties)) {
+          const prop = bodySchema.properties[key] as OpenAPIV3.SchemaObject;
+          const tsType = openapiTypeToTypeScript(prop);
+          if (requiredFields.includes(key)) hasRequired = true;
+          fields.push(`'${key}': ${tsType};`);
+        }
+      }
+    }
+  }
+
+  if (fields.length === 0) {
+    return { type: '', required: false };
+  }
+
+  return { type: `{ ${fields.join(' ')} }`, required: hasRequired };
 };
 
 /** 重组 response */

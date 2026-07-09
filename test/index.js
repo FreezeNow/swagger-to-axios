@@ -8,13 +8,45 @@ import pactum from 'pactum';
 const mock = pactum.mock;
 
 test('获取 swagger 文档', async () => {
-  const result = {
+    const result = {
     openapi: '3.0.0',
     info: { description: 'demo', title: 'demo', version: '1.0.0' },
     paths: {
       '/user/login': { post: { description: '用户登录', tags: ['user'], responses: {} } },
       '/user/logout': { delete: { description: '用户登出', tags: ['user'], responses: {} } },
       '/user/password': { put: { description: '修改密码', tags: ['user'], responses: {} } },
+      '/user/{id}': {
+        get: {
+          description: '获取用户详情',
+          tags: ['user'],
+          responses: {},
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+            { name: 'keyword', in: 'query', required: false, schema: { type: 'string' } },
+            { name: 'pageNum', in: 'query', required: false, schema: { type: 'integer' } },
+          ],
+        },
+      },
+      '/user/{groupId}/members': {
+        post: {
+          description: '添加成员',
+          tags: ['user'],
+          responses: {},
+          parameters: [{ name: 'groupId', in: 'path', required: true, schema: { type: 'integer' } }],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'email'],
+                  properties: { name: { type: 'string' }, email: { type: 'string' }, role: { type: 'string' } },
+                },
+              },
+            },
+            required: true,
+          },
+        },
+      },
     },
     tags: [{ name: 'user', description: '用户' }],
     servers: [{ url: 'http://127.0.0.1:8848/a/b/c' }, { url: 'https://127.0.0.1:8848/a/b/c' }],
@@ -125,6 +157,22 @@ test('获取 swagger 文档列表', async () => {
               method: 'put',
               comment: { description: '修改密码', summary: '' },
               response: undefined,
+            },
+            {
+              url: '/user/{id}',
+              method: 'get',
+              comment: { description: '获取用户详情', summary: '' },
+              response: undefined,
+              paramType: "{ 'id': number; 'keyword': string; 'pageNum': number; }",
+              paramRequired: true,
+            },
+            {
+              url: '/user/{groupId}/members',
+              method: 'post',
+              comment: { description: '添加成员', summary: '' },
+              response: undefined,
+              paramType: "{ 'groupId': number; 'name': string; 'email': string; 'role': string; }",
+              paramRequired: true,
             },
           ],
         },

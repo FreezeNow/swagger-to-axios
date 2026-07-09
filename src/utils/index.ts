@@ -236,7 +236,7 @@ export const parametersToTypeScript = (
       if (!schema) continue;
       const tsType = openapiTypeToTypeScript(schema);
       if (param.required) hasRequired = true;
-      fields.push(`'${param.name}': ${tsType};`);
+      fields.push(`'${param.name}'${param.required ? '' : '?'}: ${tsType};`);
     }
   } else {
     for (const param of parameters) {
@@ -257,7 +257,7 @@ export const parametersToTypeScript = (
           const prop = bodySchema.properties[key] as OpenAPIV3.SchemaObject;
           const tsType = openapiTypeToTypeScript(prop);
           if (requiredFields.includes(key)) hasRequired = true;
-          fields.push(`'${key}': ${tsType};`);
+          fields.push(`'${key}'${requiredFields.includes(key) ? '' : '?'}: ${tsType};`);
         }
       }
     }

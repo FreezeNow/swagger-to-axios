@@ -163,7 +163,7 @@ test('获取 swagger 文档列表', async () => {
               method: 'get',
               comment: { description: '获取用户详情', summary: '' },
               response: undefined,
-              paramType: "{ 'id': number; 'keyword': string; 'pageNum': number; }",
+              paramType: "{ 'id': number; 'keyword'?: string; 'pageNum'?: number; }",
               paramRequired: true,
             },
             {
@@ -171,7 +171,7 @@ test('获取 swagger 文档列表', async () => {
               method: 'post',
               comment: { description: '添加成员', summary: '' },
               response: undefined,
-              paramType: "{ 'groupId': number; 'name': string; 'email': string; 'role': string; }",
+              paramType: "{ 'groupId': number; 'name': string; 'email': string; 'role'?: string; }",
               paramRequired: true,
             },
           ],

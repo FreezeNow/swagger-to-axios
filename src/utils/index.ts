@@ -231,6 +231,7 @@ export const parametersToTypeScript = (
 
   if (method?.toUpperCase() === 'GET') {
     for (const param of parameters) {
+      if (param.in !== 'query' && param.in !== 'path') continue;
       const schema = (param as OpenAPIV3.ParameterObject)?.schema as OpenAPIV3.SchemaObject;
       if (!schema) continue;
       const tsType = openapiTypeToTypeScript(schema);

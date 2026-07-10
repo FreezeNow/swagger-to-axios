@@ -78,6 +78,30 @@ paths:
       tags:
         - user
       responses: {}
+  /user/notify:
+    post:
+      parameters:
+        - name: "Access-Token"
+          in: "header"
+          description: "令牌"
+          required: true
+          type: "string"
+          default: "device"
+        - name: info
+          in: body
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
+              type:
+                type: integer
+      description: 发送通知
+      tags:
+        - user
+      responses: {}
 definitions: {}
 responses: {}
 parameters: {}

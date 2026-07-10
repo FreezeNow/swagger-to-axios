@@ -47,6 +47,25 @@ test('获取 swagger 文档', async () => {
           },
         },
       },
+      '/user/notify': {
+        post: {
+          description: '发送通知',
+          tags: ['user'],
+          responses: {},
+          parameters: [{ name: 'Access-Token', in: 'header', description: '令牌', required: true, schema: { type: 'string', default: 'device' } }],
+          requestBody: {
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['message'],
+                  properties: { message: { type: 'string' }, type: { type: 'integer' } },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     tags: [{ name: 'user', description: '用户' }],
     servers: [{ url: 'http://127.0.0.1:8848/a/b/c' }, { url: 'https://127.0.0.1:8848/a/b/c' }],
@@ -172,6 +191,14 @@ test('获取 swagger 文档列表', async () => {
               comment: { description: '添加成员', summary: '' },
               response: undefined,
               paramType: "{ 'groupId': number; 'name': string; 'email': string; 'role'?: string; }",
+              paramRequired: true,
+            },
+            {
+              url: '/user/notify',
+              method: 'post',
+              comment: { description: '发送通知', summary: '' },
+              response: undefined,
+              paramType: "{ 'message': string; 'type'?: number; }",
               paramRequired: true,
             },
           ],
@@ -395,6 +422,15 @@ describe('parametersToTypeScript', () => {
       'POST',
     );
     expect(result).toEqual({ type: "{ 'id': number; 'name': string; 'age'?: number; }", required: true });
+  });
+
+  test('非 GET 仅有 requestBody（无 path 参数）', () => {
+    const result = parametersToTypeScript(
+      [{ name: 'token', in: 'header', schema: { type: 'string' } }],
+      { content: { 'application/json': { schema: { type: 'object', required: ['message'], properties: { message: { type: 'string' }, type: { type: 'integer' } } } } }, required: true },
+      'POST',
+    );
+    expect(result).toEqual({ type: "{ 'message': string; 'type'?: number; }", required: true });
   });
 
   test('非 GET 无参数', () => {

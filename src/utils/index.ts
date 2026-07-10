@@ -50,7 +50,9 @@ export const getSwaggerJson = async ({
     }
     if ('swagger' in swagger) {
       const result = await convertObj(swagger, {});
-      return result.openapi;
+      const openapi = await SwaggerParser.dereference(result.openapi as any);
+      expandAllOf(openapi?.paths ?? {});
+      return openapi as OpenAPIV3.Document;
     }
     return swagger;
   } catch (error) {

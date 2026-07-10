@@ -1,7 +1,7 @@
 import mockFs from 'mock-fs';
 import fs from 'fs/promises';
 
-import { getSwaggerJson, getFolderList, upperFirstCase, urlToName, urlToLinkParams, writeFile } from '../lib/utils';
+import { getSwaggerJson, getFolderList, upperFirstCase, urlToName, urlToLinkParams, writeFile, openapiTypeToTypeScript, parametersToTypeScript, getResponse, getTagList, expandAllOf } from '../lib/utils';
 
 import pactum from 'pactum';
 
@@ -254,5 +254,206 @@ describe('写入测试', () => {
   test('写入文件', async () => {
     expect(await writeFile('1.js', '测试')).toBe(true);
     await expect(writeFile('resolve', undefined)).rejects.toMatch('发生异常，已停止写文件');
+  });
+});
+
+describe('import 语句生成', () => {
+  const genImport = (namedImport, importPath) =>
+    `import ${!namedImport ? 'request' : namedImport === 'request' ? `{ request }` : `{ ${namedImport} as request }`} from '${importPath}';`;
+
+  test('namedImport 为空时生成默认 import request', () => {
+    expect(genImport(undefined, './request')).toBe("import request from './request';");
+    expect(genImport(null, './request')).toBe("import request from './request';");
+  });
+
+  test('namedImport 为 request 时生成命名导入 { request }', () => {
+    expect(genImport('request', './request')).toBe("import { request } from './request';");
+  });
+
+  test('namedImport 为非 request 时生成别名导入', () => {
+    expect(genImport('http', './request')).toBe("import { http as request } from './request';");
+    expect(genImport('axios', './request')).toBe("import { axios as request } from './request';");
+  });
+});
+
+describe('expandAllOf', () => {
+  test('展开简单 allOf', () => {
+    const obj = { allOf: [{ a: 1 }, { b: 2 }], c: 3 };
+    expandAllOf(obj);
+    expect(obj).toEqual({ a: 1, b: 2, c: 3 });
+  });
+
+  test('无 allOf 时不变', () => {
+    const obj = { a: 1, b: 2 };
+    expandAllOf(obj);
+    expect(obj).toEqual({ a: 1, b: 2 });
+  });
+
+  test('嵌套 allOf', () => {
+    const obj = { allOf: [{ a: 1, allOf: [{ b: 2 }] }] };
+    expandAllOf(obj);
+    expect(obj).toEqual({ a: 1, b: 2 });
+  });
+
+  test('合并数组字段去重', () => {
+    const obj = { allOf: [{ arr: [1, 2] }, { arr: [2, 3] }] };
+    expandAllOf(obj);
+    expect(obj).toEqual({ arr: [1, 2, 3] });
+  });
+});
+
+describe('openapiTypeToTypeScript', () => {
+  test('number 类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'integer' })).toBe('number');
+    expect(openapiTypeToTypeScript({ type: 'number' })).toBe('number');
+    expect(openapiTypeToTypeScript({ type: 'int64' })).toBe('number');
+    expect(openapiTypeToTypeScript({ type: 'float' })).toBe('number');
+  });
+
+  test('date 类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'date' })).toBe('Date');
+    expect(openapiTypeToTypeScript({ type: 'dateTime' })).toBe('Date');
+    expect(openapiTypeToTypeScript({ type: 'datetime' })).toBe('Date');
+  });
+
+  test('string 类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'string' })).toBe('string');
+    expect(openapiTypeToTypeScript({ type: 'email' })).toBe('string');
+    expect(openapiTypeToTypeScript({ type: 'url' })).toBe('string');
+  });
+
+  test('boolean 类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'boolean' })).toBe('boolean');
+  });
+
+  test('array 类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'array', items: { type: 'string' } })).toBe('string[]');
+    expect(openapiTypeToTypeScript({ type: 'array', items: { type: 'integer' } })).toBe('number[]');
+  });
+
+  test('array 联合类型', () => {
+    expect(openapiTypeToTypeScript({ type: 'array', items: { type: 'array', items: { type: 'string' } } })).toBe('string[][]');
+  });
+
+  test('array 多类型 items', () => {
+    expect(openapiTypeToTypeScript({ type: 'array', items: [{ type: 'string' }, { type: 'integer' }] })).toBe('[string,number]');
+  });
+
+  test('object 类型有 properties', () => {
+    expect(openapiTypeToTypeScript({ type: 'object', properties: { name: { type: 'string' }, age: { type: 'integer' } } })).toBe("{ 'name': string; 'age': number; }");
+  });
+
+  test('object 类型无 properties', () => {
+    expect(openapiTypeToTypeScript({ type: 'object' })).toBe('Record<string, any>');
+  });
+
+  test('object 隐式类型（只有 properties）', () => {
+    expect(openapiTypeToTypeScript({ properties: { title: { type: 'string' } } })).toBe("{ 'title': string; }");
+  });
+
+  test('未知类型返回 any', () => {
+    expect(openapiTypeToTypeScript({ type: 'unknown' })).toBe('any');
+  });
+
+  test('空 schema 返回 any', () => {
+    expect(openapiTypeToTypeScript({})).toBe('any');
+  });
+});
+
+describe('parametersToTypeScript', () => {
+  test('GET 方法 query 参数', () => {
+    const result = parametersToTypeScript(
+      [{ name: 'page', in: 'query', schema: { type: 'integer' } }],
+      undefined,
+      'GET',
+    );
+    expect(result).toEqual({ type: "{ 'page'?: number; }", required: false });
+  });
+
+  test('GET 方法 path 参数', () => {
+    const result = parametersToTypeScript(
+      [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+      undefined,
+      'GET',
+    );
+    expect(result).toEqual({ type: "{ 'id': number; }", required: true });
+  });
+
+  test('GET 忽略非 query/path 参数', () => {
+    const result = parametersToTypeScript(
+      [{ name: 'token', in: 'header', schema: { type: 'string' } }],
+      undefined,
+      'GET',
+    );
+    expect(result).toEqual({ type: '', required: false });
+  });
+
+  test('非 GET 方法 path 参数和 requestBody', () => {
+    const result = parametersToTypeScript(
+      [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }],
+      { content: { 'application/json': { schema: { type: 'object', required: ['name'], properties: { name: { type: 'string' }, age: { type: 'integer' } } } } }, required: true },
+      'POST',
+    );
+    expect(result).toEqual({ type: "{ 'id': number; 'name': string; 'age'?: number; }", required: true });
+  });
+
+  test('非 GET 无参数', () => {
+    const result = parametersToTypeScript([], undefined, 'POST');
+    expect(result).toEqual({ type: '', required: false });
+  });
+});
+
+describe('getResponse', () => {
+  test('undefined 返回 undefined', () => {
+    expect(getResponse(undefined)).toBeUndefined();
+  });
+
+  test('有 response 携带 schema', () => {
+    const result = getResponse({
+      description: '成功',
+      content: { 'application/json': { schema: { type: 'object', properties: { id: { type: 'integer' } } } } },
+    });
+    expect(result).toEqual({ description: '成功', data: "{ 'id': number; }" });
+  });
+
+  test('有 response 无 schema', () => {
+    const result = getResponse({ description: '成功' });
+    expect(result).toEqual({ description: '成功', data: 'any' });
+  });
+});
+
+describe('getTagList', () => {
+  test('tags 和 paths 生成 tagList', () => {
+    const tags = [{ name: 'user', description: '用户' }];
+    const paths = {
+      '/user': { get: { tags: ['user'], description: '获取用户', summary: '获取用户', responses: {} } },
+    };
+    const result = getTagList(tags, paths);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('user');
+    expect(result[0].comment).toBe('用户');
+    expect(result[0].apiList).toHaveLength(1);
+    expect(result[0].apiList[0].url).toBe('/user');
+    expect(result[0].apiList[0].method).toBe('get');
+  });
+
+  test('未出现在 tags 中的方法标签自动创建', () => {
+    const paths = {
+      '/info': { get: { tags: ['info'], description: '获取信息', responses: {} } },
+    };
+    const result = getTagList([], paths);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('info');
+    expect(result[0].comment).toBe('');
+  });
+
+  test('无 tags 和 paths 返回空数组', () => {
+    expect(getTagList()).toEqual([]);
+    expect(getTagList([], {})).toEqual([]);
+  });
+
+  test('忽略无 methods 的 path', () => {
+    const result = getTagList([], { '/invalid': null });
+    expect(result).toEqual([]);
   });
 });
